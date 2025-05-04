@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".AddStudentActivity">
+
+    <EditText
+        android:id="@+id/edit_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/name_field"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/edit_id"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/edit_name"
+        app:layout_constraintTop_toBottomOf="@id/edit_name" />
+
+    <EditText
+        android:id="@+id/edit_phone_number"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/edit_name"
+        app:layout_constraintTop_toBottomOf="@id/edit_id" />
+
+    <EditText
+        android:id="@+id/edit_email"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/edit_name"
+        app:layout_constraintTop_toBottomOf="@id/edit_phone_number" />
+
+    <TextView
+        android:id="@+id/name_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name:"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@+id/edit_id"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/edit_name" />
+
+    <TextView
+        android:id="@+id/id_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ID: "
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/edit_id"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edit_name" />
+
+    <TextView
+        android:id="@+id/phone_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Phone:"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/edit_phone_number"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edit_id" />
+
+    <TextView
+        android:id="@+id/email_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Email:"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/edit_email"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edit_phone_number" />
+
+    <Button
+        android:id="@+id/cancel_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edit_email" />
+
+    <Button
+        android:id="@+id/confirm_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Confirm"
+        app:layout_constraintEnd_toStartOf="@+id/cancel_btn"
+        app:layout_constraintTop_toBottomOf="@+id/edit_email" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
