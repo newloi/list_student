@@ -1,7 +1,10 @@
 package com.example.liststudent
 
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
@@ -24,6 +27,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: StudentAdapter
     private lateinit var editStudentLauncher: ActivityResultLauncher<Intent>
     private lateinit var addStudentLauncher: ActivityResultLauncher<Intent>
+    lateinit var db: SQLiteDatabase
+    val students = mutableListOf<Student>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,10 +41,19 @@ class MainActivity : AppCompatActivity() {
         }
         setSupportActionBar(findViewById<Toolbar>(R.id.toolbar))
 
-        val students = mutableListOf<Student>()
-        repeat(50) {
-            students.add(Student("Student ${it}", (10000000..99999999).random().toString(), (1000000000L..9999999999L).random().toString(), "example${it}@gmail.com"))
-        }
+
+        val dbPath = "${filesDir}/students.db"
+        db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.CREATE_IF_NECESSARY)
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS tblStudents (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                email TEXT NOT NULL
+            )
+        """.trimIndent())
+
+        getAllStudents()
 
         recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -54,6 +68,7 @@ class MainActivity : AppCompatActivity() {
 
                 if(!name.isNullOrBlank() && !id.isNullOrBlank() && !phone.isNullOrBlank() && !email.isNullOrBlank() && position >= 0) {
                     val editedStudent = Student(name, id, phone, email)
+                    updateStudent(students[position].id, editedStudent)
                     students[position] = editedStudent
                     adapter.notifyItemChanged(position)
                 }
@@ -69,6 +84,7 @@ class MainActivity : AppCompatActivity() {
 
                 if(!name.isNullOrBlank() && !id.isNullOrBlank() && !phone.isNullOrBlank() && !email.isNullOrBlank()) {
                     val newStudent = Student(name, id, phone, email)
+                    insertStudent(newStudent)
                     students.add(0, newStudent)
                     adapter.notifyItemInserted(0)
                 }
@@ -92,6 +108,7 @@ class MainActivity : AppCompatActivity() {
                         .setTitle("Delete ${student.name} (${student.id})?")
                         .setMessage("Are you sure about that?")
                         .setPositiveButton("Yes, I sure!") { _, _ ->
+                            deleteStudent(students[position].id)
                             students.removeAt(position)
                             adapter.notifyItemRemoved(position)
                         }
@@ -131,5 +148,50 @@ class MainActivity : AppCompatActivity() {
         }
 
         return true
+    }
+
+    private fun getAllStudents() {
+        students.clear();
+        val cursor: Cursor = db.rawQuery("SELECT id,name, phone, email FROM tblStudents", null);
+        if(cursor.moveToFirst()) {
+            do {
+                val id = cursor.getString(0)
+                val name = cursor.getString(1)
+                val phoneNumber = cursor.getString(2)
+                val email = cursor.getString(3)
+                students.add(Student(name, id, phoneNumber, email))
+            } while(cursor.moveToNext())
+        }
+        cursor.close()
+    }
+
+    private fun insertStudent(student: Student) {
+        val newStudent = ContentValues().apply {
+            put("id", student.id)
+            put("name", student.name)
+            put("phone", student.phoneNumber)
+            put("email", student.email)
+        }
+        db.insert("tblStudents", null, newStudent)
+    }
+
+
+    private fun updateStudent(id: String, edittedStudent: Student) {
+        val newStudent = ContentValues().apply {
+            put("id", edittedStudent.id)
+            put("name", edittedStudent.name)
+            put("phone", edittedStudent.phoneNumber)
+            put("email", edittedStudent.email)
+        }
+        db.update("tblStudents", newStudent, "id = ?", arrayOf(id))
+    }
+
+    private fun deleteStudent(id: String) {
+        db.delete("tblStudents", "id =?", arrayOf(id))
+    }
+
+    override fun onDestroy() {
+        db.close()
+        super.onDestroy()
     }
 }
