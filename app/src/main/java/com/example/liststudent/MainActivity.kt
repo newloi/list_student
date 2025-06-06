@@ -1,12 +1,10 @@
 package com.example.liststudent
 
 import android.app.Activity
-import android.content.ContentValues
 import android.content.Intent
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
@@ -17,9 +15,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.LayoutManager
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,8 +26,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: StudentAdapter
     private lateinit var editStudentLauncher: ActivityResultLauncher<Intent>
     private lateinit var addStudentLauncher: ActivityResultLauncher<Intent>
-    lateinit var db: SQLiteDatabase
     val students = mutableListOf<Student>()
+    private lateinit var studentDao: StudentDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,18 +40,7 @@ class MainActivity : AppCompatActivity() {
         }
         setSupportActionBar(findViewById<Toolbar>(R.id.toolbar))
 
-
-        val dbPath = "${filesDir}/students.db"
-        db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.CREATE_IF_NECESSARY)
-        db.execSQL("""
-            CREATE TABLE IF NOT EXISTS tblStudents (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                email TEXT NOT NULL
-            )
-        """.trimIndent())
-
+        studentDao = StudentDatabase.getInstance(this).studentDao()
         getAllStudents()
 
         recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
@@ -65,10 +53,10 @@ class MainActivity : AppCompatActivity() {
                 val phone = it.data?.getStringExtra("phone")
                 val email = it.data?.getStringExtra("email")
                 val position = it.data?.getIntExtra("pos", -1) ?: -1
-
+                val key = it.data?.getIntExtra("key", 0) ?: 0
                 if(!name.isNullOrBlank() && !id.isNullOrBlank() && !phone.isNullOrBlank() && !email.isNullOrBlank() && position >= 0) {
-                    val editedStudent = Student(name, id, phone, email)
-                    updateStudent(students[position].id, editedStudent)
+                    val editedStudent = Student(key, name, id, phone, email)
+                    updateStudent(editedStudent)
                     students[position] = editedStudent
                     adapter.notifyItemChanged(position)
                 }
@@ -83,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 val email = it.data?.getStringExtra("email")
 
                 if(!name.isNullOrBlank() && !id.isNullOrBlank() && !phone.isNullOrBlank() && !email.isNullOrBlank()) {
-                    val newStudent = Student(name, id, phone, email)
+                    val newStudent = Student(key = 0, name, id, phone, email)
                     insertStudent(newStudent)
                     students.add(0, newStudent)
                     adapter.notifyItemInserted(0)
@@ -101,6 +89,7 @@ class MainActivity : AppCompatActivity() {
                     intent.putExtra("phone", student.phoneNumber)
                     intent.putExtra("email", student.email)
                     intent.putExtra("pos", position)
+                    intent.putExtra("key", student.key)
                     editStudentLauncher.launch(intent)
                 }
                 "delete" -> {
@@ -108,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                         .setTitle("Delete ${student.name} (${student.id})?")
                         .setMessage("Are you sure about that?")
                         .setPositiveButton("Yes, I sure!") { _, _ ->
-                            deleteStudent(students[position].id)
+                            deleteStudent(students[position])
                             students.removeAt(position)
                             adapter.notifyItemRemoved(position)
                         }
@@ -151,47 +140,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getAllStudents() {
-        students.clear();
-        val cursor: Cursor = db.rawQuery("SELECT id,name, phone, email FROM tblStudents", null);
-        if(cursor.moveToFirst()) {
-            do {
-                val id = cursor.getString(0)
-                val name = cursor.getString(1)
-                val phoneNumber = cursor.getString(2)
-                val email = cursor.getString(3)
-                students.add(Student(name, id, phoneNumber, email))
-            } while(cursor.moveToNext())
+        lifecycleScope.launch {
+            students.clear()
+            students.addAll(studentDao.getAll())
+            adapter.notifyDataSetChanged()
         }
-        cursor.close()
     }
 
     private fun insertStudent(student: Student) {
-        val newStudent = ContentValues().apply {
-            put("id", student.id)
-            put("name", student.name)
-            put("phone", student.phoneNumber)
-            put("email", student.email)
+        lifecycleScope.launch {
+            studentDao.insert(student)
         }
-        db.insert("tblStudents", null, newStudent)
     }
 
 
-    private fun updateStudent(id: String, edittedStudent: Student) {
-        val newStudent = ContentValues().apply {
-            put("id", edittedStudent.id)
-            put("name", edittedStudent.name)
-            put("phone", edittedStudent.phoneNumber)
-            put("email", edittedStudent.email)
+    private fun updateStudent(edittedStudent: Student) {
+        lifecycleScope.launch {
+            studentDao.update(edittedStudent)
         }
-        db.update("tblStudents", newStudent, "id = ?", arrayOf(id))
     }
 
-    private fun deleteStudent(id: String) {
-        db.delete("tblStudents", "id =?", arrayOf(id))
-    }
-
-    override fun onDestroy() {
-        db.close()
-        super.onDestroy()
+    private fun deleteStudent(student: Student) {
+        lifecycleScope.launch {
+            studentDao.delete(student)
+        }
     }
 }

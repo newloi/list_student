@@ -1,6 +1,7 @@
 package com.example.liststudent
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
@@ -31,6 +32,7 @@ class EditStudentActivity : AppCompatActivity() {
         editPhone.setText(intent.getStringExtra("phone"))
         editEmail.setText(intent.getStringExtra("email"))
         val position = intent.getIntExtra("pos", -1)
+        val key = intent.getIntExtra("key", 0)
 
         confirmBtn.setOnClickListener {
             intent.putExtra("name", editName.text.toString())
@@ -38,6 +40,7 @@ class EditStudentActivity : AppCompatActivity() {
             intent.putExtra("phone", editPhone.text.toString())
             intent.putExtra("email", editEmail.text.toString())
             intent.putExtra("pos", position)
+            intent.putExtra("key", key)
             setResult(RESULT_OK, intent)
             finish()
         }
